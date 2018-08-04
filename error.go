@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"runtime"
+	"strings"
 )
 
 // Error severities
@@ -493,8 +494,12 @@ func (c *conn) errRecover(err *error) {
 			*err = v
 		}
 	case *net.OpError:
-		c.bad = true
-		*err = v
+		if strings.Contains(v.Error(), "broken pipe") {
+			*err = driver.ErrBadConn
+		} else {
+			c.bad = true
+			*err = v
+		}
 	case error:
 		if v == io.EOF || v.(error).Error() == "remote error: handshake failure" {
 			*err = driver.ErrBadConn
